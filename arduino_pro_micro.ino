@@ -4,9 +4,16 @@ int readIndex = 0;           // index pro ukládání
 int total = 0;               // suma hodnot
 int average = 0;             // průměrná hodnota
 
+const int buttonPin = 2;
+int buttonState = 0;
+const int ledPin = 9;
+bool mute = false;
+bool lastButtonState = HIGH;  // pro detekci změny stavu tlačítka
+
 void setup() {
+  pinMode(ledPin, OUTPUT);
+  pinMode(buttonPin, INPUT_PULLUP);
   Serial.begin(115200);
-  // inicializace pole hodnot na nulu
   for (int i = 0; i < numReadings; i++) {
     readings[i] = 0;
   }
@@ -22,8 +29,8 @@ void loop() {
   // přičti novou hodnotu k sumě
   total = total + readings[readIndex];
 
-  // posuň index, pokud dosáhl konce, vrať ho na začátek
-  readIndex = readIndex + 1;
+  // posuň index
+  readIndex++;
   if (readIndex >= numReadings) {
     readIndex = 0;
   }
@@ -34,7 +41,21 @@ void loop() {
   // přemapuj průměrnou hodnotu
   int sensorValue = map(average, 0, 1023, 0, 100);
 
-  Serial.println(sensorValue);
+  // čtení tlačítka s detekcí změny stavu
+  int currentButtonState = digitalRead(buttonPin);
+  if (lastButtonState == HIGH && currentButtonState == LOW) {
+    mute = !mute;  // přepne stav mute
+  }
+  lastButtonState = currentButtonState;
 
+  // logika LED a vypnutí výstupu
+  if (mute) {
+    digitalWrite(ledPin, HIGH);
+    sensorValue = 0;
+  } else {
+    digitalWrite(ledPin, LOW);
+  }
+
+  Serial.println(sensorValue);
   
 }
